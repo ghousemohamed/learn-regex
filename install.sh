@@ -13,10 +13,13 @@ ARCH=$(uname -m)
 if [[ "$OS" == "linux" ]]; then
     if [[ "$ARCH" == "x86_64" ]]; then
         BINARY="learn-regex_Linux_x86_64.tar.gz"
+        EXTRACT_DIR="learn-regex_Linux_x86_64"
     elif [[ "$ARCH" == "aarch64" ]]; then
         BINARY="learn-regex_Linux_arm64.tar.gz"
+        EXTRACT_DIR="learn-regex_Linux_arm64"
     elif [[ "$ARCH" == "i386" || "$ARCH" == "i686" ]]; then
         BINARY="learn-regex_Linux_i386.tar.gz"
+        EXTRACT_DIR="learn-regex_Linux_i386"
     else
         echo "Unsupported architecture: $ARCH"
         exit 1
@@ -24,8 +27,10 @@ if [[ "$OS" == "linux" ]]; then
 elif [[ "$OS" == "darwin" ]]; then
     if [[ "$ARCH" == "x86_64" ]]; then
         BINARY="learn-regex_Darwin_x86_64.tar.gz"
+        EXTRACT_DIR="learn-regex_Darwin_x86_64"
     elif [[ "$ARCH" == "arm64" ]]; then
         BINARY="learn-regex_Darwin_arm64.tar.gz"
+        EXTRACT_DIR="learn-regex_Darwin_arm64"
     else
         echo "Unsupported architecture: $ARCH"
         exit 1
@@ -33,10 +38,13 @@ elif [[ "$OS" == "darwin" ]]; then
 elif [[ "$OS" == "mingw32nt" || "$OS" == "cygwin" || "$OS" == "msys" || "$OS" == "windows_nt" ]]; then
     if [[ "$ARCH" == "x86_64" ]]; then
         BINARY="learn-regex_Windows_x86_64.zip"
+        EXTRACT_DIR="learn-regex_Windows_x86_64"
     elif [[ "$ARCH" == "aarch64" ]]; then
         BINARY="learn-regex_Windows_arm64.zip"
+        EXTRACT_DIR="learn-regex_Windows_arm64"
     elif [[ "$ARCH" == "i386" || "$ARCH" == "i686" ]]; then
         BINARY="learn-regex_Windows_i386.zip"
+        EXTRACT_DIR="learn-regex_Windows_i386"
     else
         echo "Unsupported architecture: $ARCH"
         exit 1
@@ -55,11 +63,11 @@ cd "$TMP_DIR"
 if [[ "$OS" == "mingw32nt" || "$OS" == "cygwin" || "$OS" == "msys" || "$OS" == "windows_nt" ]]; then
     curl -L -o "$BINARY" "$DOWNLOAD_URL"
     unzip "$BINARY"
-    mv learn-regex.exe "$INSTALL_DIR/$BIN_NAME.exe"
+    mv "$EXTRACT_DIR/learn-regex.exe" "$INSTALL_DIR/$BIN_NAME.exe"
 else
     curl -L -o "$BINARY" "$DOWNLOAD_URL"
     tar xzf "$BINARY"
-    mv learn-regex "$INSTALL_DIR/$BIN_NAME"
+    mv "$EXTRACT_DIR/learn-regex" "$INSTALL_DIR/$BIN_NAME"
     chmod +x "$INSTALL_DIR/$BIN_NAME"
 fi
 
