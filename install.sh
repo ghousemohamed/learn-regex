@@ -3,7 +3,7 @@
 REPO="ghousemohamed/learn-regex"
 BIN_NAME="learn-regex"
 INSTALL_DIR="$HOME/.local/bin"
-VERSION="0.1.0"
+VERSION="v0.2.0"
 
 mkdir -p "$INSTALL_DIR"
 
@@ -12,43 +12,24 @@ ARCH=$(uname -m)
 
 if [[ "$OS" == "linux" ]]; then
     if [[ "$ARCH" == "x86_64" ]]; then
-        BINARY="learn-regex_Linux_x86_64.tar.gz"
-        EXTRACT_DIR="learn-regex_Linux_x86_64"
+        BINARY="$BIN_NAME-linux-amd64"
     elif [[ "$ARCH" == "aarch64" ]]; then
-        BINARY="learn-regex_Linux_arm64.tar.gz"
-        EXTRACT_DIR="learn-regex_Linux_arm64"
-    elif [[ "$ARCH" == "i386" || "$ARCH" == "i686" ]]; then
-        BINARY="learn-regex_Linux_i386.tar.gz"
-        EXTRACT_DIR="learn-regex_Linux_i386"
+        BINARY="$BIN_NAME-linux-arm64"
     else
         echo "Unsupported architecture: $ARCH"
         exit 1
     fi
 elif [[ "$OS" == "darwin" ]]; then
     if [[ "$ARCH" == "x86_64" ]]; then
-        BINARY="learn-regex_Darwin_x86_64.tar.gz"
-        EXTRACT_DIR="learn-regex_Darwin_x86_64"
+        BINARY="$BIN_NAME-darwin-amd64"
     elif [[ "$ARCH" == "arm64" ]]; then
-        BINARY="learn-regex_Darwin_arm64.tar.gz"
-        EXTRACT_DIR="learn-regex_Darwin_arm64"
+        BINARY="$BIN_NAME-darwin-arm64"
     else
         echo "Unsupported architecture: $ARCH"
         exit 1
     fi
-elif [[ "$OS" == "mingw32nt" || "$OS" == "cygwin" || "$OS" == "msys" || "$OS" == "windows_nt" ]]; then
-    if [[ "$ARCH" == "x86_64" ]]; then
-        BINARY="learn-regex_Windows_x86_64.zip"
-        EXTRACT_DIR="learn-regex_Windows_x86_64"
-    elif [[ "$ARCH" == "aarch64" ]]; then
-        BINARY="learn-regex_Windows_arm64.zip"
-        EXTRACT_DIR="learn-regex_Windows_arm64"
-    elif [[ "$ARCH" == "i386" || "$ARCH" == "i686" ]]; then
-        BINARY="learn-regex_Windows_i386.zip"
-        EXTRACT_DIR="learn-regex_Windows_i386"
-    else
-        echo "Unsupported architecture: $ARCH"
-        exit 1
-    fi
+elif [[ "$OS" == "mingw32nt" || "$OS" == "cygwin" || "$OS" == "msys" ]]; then
+    BINARY="$BIN_NAME-windows-amd64.exe"
 else
     echo "Unsupported OS: $OS"
     exit 1
@@ -56,31 +37,18 @@ fi
 
 DOWNLOAD_URL="https://github.com/$REPO/releases/download/$VERSION/$BINARY"
 echo "Downloading $BINARY from $DOWNLOAD_URL..."
+curl -L -o "$INSTALL_DIR/$BIN_NAME" "$DOWNLOAD_URL"
 
-TMP_DIR=$(mktemp -d)
-cd "$TMP_DIR"
-
-if [[ "$OS" == "mingw32nt" || "$OS" == "cygwin" || "$OS" == "msys" || "$OS" == "windows_nt" ]]; then
-    curl -L -o "$BINARY" "$DOWNLOAD_URL"
-    unzip "$BINARY"
-    mv "$EXTRACT_DIR/learn-regex.exe" "$INSTALL_DIR/$BIN_NAME.exe"
-else
-    curl -L -o "$BINARY" "$DOWNLOAD_URL"
-    tar xzf "$BINARY"
-    mv "$EXTRACT_DIR/learn-regex" "$INSTALL_DIR/$BIN_NAME"
+if [[ "$OS" != "mingw32nt" && "$OS" != "cygwin" && "$OS" != "msys" ]]; then
     chmod +x "$INSTALL_DIR/$BIN_NAME"
 fi
-
-cd - > /dev/null
-rm -rf "$TMP_DIR"
 
 if ! echo "$PATH" | grep -q "$INSTALL_DIR"; then
     echo "Adding $INSTALL_DIR to PATH"
     echo "export PATH=\"\$PATH:$INSTALL_DIR\"" >> "$HOME/.bashrc"
-    if [[ -f "$HOME/.zshrc" ]]; then
-        echo "export PATH=\"\$PATH:$INSTALL_DIR\"" >> "$HOME/.zshrc"
-    fi
+    echo "export PATH=\"\$PATH:$INSTALL_DIR\"" >> "$HOME/.bash_profile"
+    echo "export PATH=\"\$PATH:$INSTALL_DIR\"" >> "$HOME/.profile"
     echo "Please restart your terminal or run 'source ~/.bashrc' to update your PATH."
 fi
 
-echo "Installation complete. Happy Learning!"
+echo "Installation complete! You can now run '$BIN_NAME' from anywhere."
