@@ -14,7 +14,7 @@ An interactive command-line application to learn and practice regular expression
 ## Installation
 
 ```
-go install github.com/ghousemohamed/learn-regex-in-the-terminal
+wget https://raw.githubusercontent.com/ghousemohamed/learn-regex/main/install.sh -O install.sh && bash install.sh
 ```
 
 Or clone and build from source:
