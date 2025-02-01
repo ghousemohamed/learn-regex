@@ -56,13 +56,6 @@ func LoadProgress() (models.Progress, error) {
 	return progress, err
 }
 
-func ClearProgress() error {
-	if _, err := os.Stat(progressFile); err == nil {
-		return os.Remove(progressFile)
-	}
-	return nil
-}
-
 func ClearSpecificProgress(clearType string) error {
 	progress, err := LoadProgress()
 	if err != nil && !os.IsNotExist(err) {

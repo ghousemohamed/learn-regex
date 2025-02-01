@@ -11,6 +11,8 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+
+	// Internal
 	"github.com/ghousemohamed/regex-in-the-terminal/data"
 	"github.com/ghousemohamed/regex-in-the-terminal/models"
 	"github.com/ghousemohamed/regex-in-the-terminal/storage"
@@ -31,6 +33,7 @@ type model struct {
 }
 
 var (
+	
 	docStyle = lipgloss.NewStyle().
 		Align(lipgloss.Center)
 
@@ -87,69 +90,6 @@ var (
 )
 
 var progressFile = filepath.Join(os.Getenv("HOME"), ".regex_tutorial_progress.json")
-
-type Progress struct {
-	CurrentLesson    int      `json:"current_lesson"`
-	Completed        []string `json:"completed_lessons"`
-	PracticeIndex    int      `json:"practice_index"`
-	CompletedPractice []string `json:"completed_practice"`
-}
-
-func saveProgress(m model) error {
-	var completed []string
-	var completedPractice []string
-
-	for i, l := range m.lessons {
-		if l.Completed {
-			completed = append(completed, fmt.Sprintf("%d", i))
-		}
-	}
-
-	for i, p := range m.practices {
-		if p.Completed {
-			completedPractice = append(completedPractice, fmt.Sprintf("%d", i))
-		}
-	}
-	
-	progress := models.Progress{
-		CurrentLesson:     m.current,
-		Completed:         completed,
-		PracticeIndex:     m.practiceIndex,
-		CompletedPractice: completedPractice,
-	}
-	
-	data, err := json.Marshal(progress)
-	if err != nil {
-		return err
-	}
-	
-	return os.WriteFile(progressFile, data, 0644)
-}
-
-func loadProgress() (Progress, error) {
-	var progress Progress
-	data, err := os.ReadFile(progressFile)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return progress, nil
-		}
-		return progress, err
-	}
-	
-	err = json.Unmarshal(data, &progress)
-	if err != nil {
-		return progress, err
-	}
-
-	return progress, nil
-}
-
-func clearProgress() error {
-	if _, err := os.Stat(progressFile); err == nil {
-		return os.Remove(progressFile)
-	}
-	return nil
-}
 
 func evaluateRegex(pattern string, testCases []models.TestCase) error {
 	re, err := regexp.Compile(pattern)
@@ -215,7 +155,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c":
 			m.quitting = true
-			saveProgress(m)
+			storage.SaveProgress(m.current, m.practiceIndex, m.lessons, m.practices)
 			return m, tea.Quit
 		case "ctrl+r":
 			if m.state == models.Practicing {
@@ -253,12 +193,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.state == models.Welcome {
 				if m.selectedOption > models.StartLearning {
 					m.selectedOption--
+				} else {
+					m.selectedOption = models.Quit
 				}
 			}
 		case "down", "j":
 			if m.state == models.Welcome {
 				if m.selectedOption < models.Quit {
 					m.selectedOption++
+				} else {
+					m.selectedOption = 0
 				}
 			}
 		case "enter":
@@ -279,10 +223,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 
-			if m.state == models.Completed {
-				return m, tea.Quit
-			}
-
 			if m.state == models.Practicing {
 				if err := evaluateRegex(m.input.Value(), m.practices[m.practiceIndex].TestCases); err != nil {
 					m.err = err
@@ -293,6 +233,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						m.practiceIndex++
 					}
 					m.input.SetValue("")
+					m.err = nil
 				}
 				return m, nil
 			}
@@ -301,30 +242,35 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.err = err
 			} else {
 				m.lessons[m.current].Completed = true
+				m.err = nil
 				storage.SaveProgress(m.current, m.practiceIndex, m.lessons, m.practices)
-				if m.current == len(m.lessons)-1 {
+				if getCompletedLessons(m) == len(m.lessons) {
 					m.state = models.Success
 				} else {
-					m.current++
+					if m.current == len(m.lessons) -1 {
+						m.current = 0
+					} else {
+						m.current++
+					}
 				}
 			}
 			m.input.SetValue("")
 		case "tab":
 			if m.state == models.Learning {
-				if m.current == len(m.lessons)-1 {
-					m.state = models.Success
+				if m.current == len(m.lessons) - 1 {
+					m.current = 0
 				} else {
 					m.current++
 				}
-				m.input.SetValue("")
-				m.err = nil
 			} else if m.state == models.Practicing {
-				if m.practiceIndex < len(m.practices)-1 {
+				if m.practiceIndex == len(m.practices) - 1 {
+					m.practiceIndex = 0
+				} else {
 					m.practiceIndex++
-					m.input.SetValue("")
-					m.err = nil
 				}
 			}
+			m.input.SetValue("")
+			m.err = nil
 		case "shift+tab":
 			if m.state == models.Learning && m.current > 0 {
 				m.current--
@@ -336,7 +282,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.err = nil
 			}
 		case "esc":
-			if m.state == models.Learning || m.state == models.Practicing {
+			if m.state == models.Learning || m.state == models.Practicing || m.state == models.Success {
 				m.state = models.Welcome
 				m.input.SetValue("")
 				m.err = nil
@@ -371,6 +317,16 @@ func gradientText(text string) string {
 	return strings.Join(coloredText, "")
 }
 
+func getCompletedLessons(m model) int {
+	completedLessons := 0
+	for _, lesson := range m.lessons {
+		if lesson.Completed {
+			completedLessons++
+		}
+	}
+	return completedLessons
+}
+
 func (m model) View() string {
 	totalWidth := m.width
 	if totalWidth == 0 {
@@ -400,7 +356,7 @@ func (m model) View() string {
 			"",
 			"You're now ready to tackle real-world regex challenges!",
 			"",
-			lipgloss.NewStyle().Foreground(lipgloss.Color("#6B7280")).Render("Press ENTER to exit or ctrl+r to restart"),
+			lipgloss.NewStyle().Foreground(lipgloss.Color("#6B7280")).Render("Press ENTER to exit or ctrl+r to restart or Esc to go to main screen"),
 		)
 
 		return lipgloss.JoinVertical(lipgloss.Center,
@@ -417,7 +373,7 @@ func (m model) View() string {
 	}
 
 	if m.state == models.Welcome {
-		progress, _ := loadProgress()
+		progress, _ := storage.LoadProgress()
 		hasLessonProgress := progress.CurrentLesson > 0 || len(progress.Completed) > 0
 		hasPracticeProgress := progress.PracticeIndex > 0 || len(progress.CompletedPractice) > 0
 
@@ -471,24 +427,11 @@ func (m model) View() string {
 			header,
 			lipgloss.NewStyle().
 				Width(totalWidth - 4).
-				Margin(2).
-				Padding(2).
+				Margin(1).
+				Padding(1).
 				Border(lipgloss.RoundedBorder()).
 				BorderForeground(lipgloss.Color("#874BFD")).
 				Render(welcomeMsg.String()),
-		)
-	}
-
-	if m.state == models.Completed {
-		return lipgloss.JoinVertical(lipgloss.Center,
-			header,
-			lipgloss.NewStyle().
-				Margin(2).
-				Padding(2).
-				Border(lipgloss.RoundedBorder()).
-				BorderForeground(lipgloss.Color("#10B981")).
-				Render("🎉 Congratulations! You've completed all lessons!\n\n" +
-					"Press ENTER to exit or ctrl+r to restart the tutorial.\n"),
 		)
 	}
 
@@ -652,14 +595,14 @@ func resetModel(width, height int) model {
 	return m
 }
 
-func clearSpecificProgress(m model, clearType string) error {
-	progress, err := loadProgress()
+func clearSpecificProgress(_ model, clearType string) error {
+	progress, err := storage.LoadProgress()
 	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
 
 	if os.IsNotExist(err) {
-		progress = Progress{}
+		progress = models.Progress{}
 	}
 
 	if clearType == "practice" {
@@ -688,4 +631,4 @@ func main() {
 		fmt.Printf("Error running program: %v", err)
 		os.Exit(1)
 	}
-} 
+}
