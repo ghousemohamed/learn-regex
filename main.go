@@ -69,7 +69,6 @@ var (
 	headerStyle = lipgloss.NewStyle().
 		Bold(true).
 		Padding(1, 2).
-		MarginBottom(1).
 		Align(lipgloss.Center).
 		BorderStyle(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color("#FF0080"))
@@ -342,7 +341,7 @@ func (m model) View() string {
 	header := headerStyle.Render(gradientText(headerText))
 
 	if m.quitting {
-		return header + "\n" + "Progress saved. Thanks for learning regex!\n"
+		return header + "\n" + "Progress saved\n"
 	}
 
 	if m.state == models.Success {
@@ -363,7 +362,6 @@ func (m model) View() string {
 			header,
 			lipgloss.NewStyle().
 				Width(totalWidth - 4).
-				Margin(2).
 				Padding(2).
 				Border(lipgloss.RoundedBorder()).
 				BorderForeground(lipgloss.Color("#10B981")).
@@ -427,7 +425,6 @@ func (m model) View() string {
 			header,
 			lipgloss.NewStyle().
 				Width(totalWidth - 4).
-				Margin(1).
 				Padding(1).
 				Border(lipgloss.RoundedBorder()).
 				BorderForeground(lipgloss.Color("#874BFD")).
