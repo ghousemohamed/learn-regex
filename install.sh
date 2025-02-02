@@ -9,6 +9,17 @@ bright_yellow='\033[1;33m'
 bright_cyan='\033[1;36m'
 nc='\033[0m' # No Color
 
+echo -e '
+\033[0;31m _                                                      
+\033[1;31m| |                                                     
+\033[0;33m| | ___  __ _ _ __ _ __ ______ _ __ ___  __ _  _____  __
+\033[1;33m| |/ _ \/ _` | "__| "_ \______| "__/ _ \/ _` |/ _ \ \/ /
+\033[0;32m| |  __/ (_| | |  | | | |     | | |  __/ (_| |  __/>  < 
+\033[1;32m|_|\___|\__,_|_|  |_| |_|     |_|  \___|\__, |\___/_/\_\
+\033[0;31m                                         __/ |          
+\033[1;31m                                         |___/           
+'
+
 REPO="ghousemohamed/learn-regex"
 BIN_NAME="learn-regex"
 INSTALL_DIR="$HOME/.local/bin"
@@ -38,7 +49,6 @@ case "$OS" in
         ;;
 esac
 
-# Download the binary
 DOWNLOAD_URL="https://github.com/$REPO/releases/download/$VERSION/$BINARY"
 echo -e "${bright_yellow}Downloading ${cyan}$BIN_NAME $VERSION for $OS ($ARCH)...${nc}"
 curl -sL -o "$INSTALL_DIR/$BIN_NAME" "$DOWNLOAD_URL"
