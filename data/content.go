@@ -18,14 +18,14 @@ func GetLessons() []models.Lesson {
 				"- It won't match if it's part of another word\n\n" +
 				"Test text:\n" +
 				"✓ cat (exact match)\n" +
-				"✗ cats (extra 's')\n" +
+				"✗ bats \n" +
 				"✗ Cat (different case)\n" +
 				"✗ catch (part of another word)",
 			Task:        "Write a pattern that matches exactly the word 'cat'",
 			TestCases: []models.TestCase{
 				{Text: "cat", Expected: true},
-				{Text: "cats", Expected: false},
-				{Text: "cat food", Expected: false},
+				{Text: "bats", Expected: false},
+				{Text: "Cat food", Expected: false},
 				{Text: "dog", Expected: false},
 			},
 		},
